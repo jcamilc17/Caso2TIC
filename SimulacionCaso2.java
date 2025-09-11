@@ -1,10 +1,12 @@
+// Integrantes: David Elias Forero - , Juan Camilo Caldas - 202322445
+// Simulación Caso 2 - TIC - Infraestructura Computacional
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class SimulacionCaso2 {
 
-    public static class DimensionesMatriz {
+    public static class DimensionesMatriz { //Estructura auxiliar estilo tupla para almacenar dimensiones
         int filas;
         int columnas;
 
