@@ -1,9 +1,13 @@
 // Integrantes: David Elias Forero - , Juan Camilo Caldas - 202322445
 // Simulación Caso 2 - TIC - Infraestructura Computacional
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Queue;
 
 public class SimulacionCaso2 {
@@ -125,8 +129,62 @@ public class SimulacionCaso2 {
         System.out.println(); // Línea en blanco entre procesos
     }
 
-    public static void opcion2SimularEjecucio(){
+    public static void opcion2SimularEjecucion(int numMarcos, int numProcesos){
+        marcosTotal = numMarcos;
+        procesos = new ArrayList<>();
+        colaProcesos = new LinkedList<>();
+        tiempoGlobal = 0;
 
+        // Fase de inicialización
+        leerProcesos(numProcesos);
+
+    }
+
+    private static void leerProcesos(int numProcesos) {
+        for (int i = 0; i < numProcesos; i++) {
+            Proceso proceso = new Proceso(i);
+            
+            System.out.println("PROC " + i + " == Leyendo archivo de configuración ==");
+            
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader("proc" + i + ".txt"));
+                String linea;
+                
+                // Leer configuración
+                linea = reader.readLine(); // TP=128
+                proceso.tamPagina = Integer.parseInt(linea.split("=")[1]);
+                System.out.println("PROC " + i + "leyendo TP. Tam Páginas: " + proceso.tamPagina);
+                
+                linea = reader.readLine(); // NF=4
+                proceso.numFilas = Integer.parseInt(linea.split("=")[1]);
+                System.out.println("PROC " + i + "leyendo NF. Num Filas: " + proceso.numFilas);
+                
+                linea = reader.readLine(); // NC=4
+                proceso.numColumnas = Integer.parseInt(linea.split("=")[1]);
+                System.out.println("PROC " + i + "leyendo NC. Num Cols: " + proceso.numColumnas);
+                
+                linea = reader.readLine(); // NR=48
+                proceso.numReferencias = Integer.parseInt(linea.split("=")[1]);
+                System.out.println("PROC " + i + "leyendo NR. Num Referencias: " + proceso.numReferencias);
+                
+                linea = reader.readLine(); // NP=2
+                proceso.numPaginas = Integer.parseInt(linea.split("=")[1]);
+                System.out.println("PROC " + i + "leyendo NP. Num Paginas: " + proceso.numPaginas);
+                
+                // Leer direcciones virtuales
+                while ((linea = reader.readLine()) != null) {
+                    proceso.direccionesVirtuales.add(linea);
+                }
+                
+                reader.close();
+                System.out.println("PROC " + i + "== Terminó de leer archivo de configuración ==");
+                
+            } catch (IOException e) {
+                System.err.println("Error leyendo archivo proc" + i + ".txt: " + e.getMessage());
+            }
+            
+            procesos.add(proceso);
+        }
     }
     
 
@@ -140,6 +198,7 @@ public class SimulacionCaso2 {
         dimensiones.add(new DimensionesMatriz(12, 12));
         // para cada caso NPROC
         opcion1EscribirResultados(TP, NPROC, dimensiones);
+        opcion2SimularEjecucion(TP, NPROC);
     }
 
 }
