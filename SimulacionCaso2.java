@@ -3,6 +3,8 @@
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Queue;
 
 public class SimulacionCaso2 {
 
@@ -16,7 +18,51 @@ public class SimulacionCaso2 {
         }
     }
 
-    public static void escribirResultados(int TamsPaginas, int NumPROC, ArrayList<DimensionesMatriz> dimensiones) {
+    // Clase para representar una entrada en la tabla de páginas
+    public static class EntradaPagina {
+        boolean presente;        // ¿La página está en memoria RAM?
+        int marcoFisico;        // ¿En qué marco físico está? (-1 si no está)
+        long tiempoUltimoAcceso; // Para algoritmo LRU
+    }
+
+    // Clase para representar un proceso
+    static class Proceso {
+        int id;
+        int tamPagina;
+        int numFilas;
+        int numColumnas;
+        int numReferencias;
+        int numPaginas;
+        ArrayList<String> direccionesVirtuales;
+        HashMap<Integer, EntradaPagina> tablaPaginas;
+        ArrayList<Integer> marcosAsignados;
+        int indiceActual;
+        
+        // Estadísticas
+        int referencias;
+        int fallos;
+        int hits;
+        int accesosSwap;
+        
+        public Proceso(int id) {
+            this.id = id;
+            this.direccionesVirtuales = new ArrayList<>();
+            this.tablaPaginas = new HashMap<>();
+            this.marcosAsignados = new ArrayList<>();
+            this.indiceActual = 0;
+            this.referencias = 0;
+            this.fallos = 0;
+            this.hits = 0;
+            this.accesosSwap = 0;
+        }
+    }
+    // Variables  globales para la opción 2
+    private static long tiempoGlobal = 0;
+    private static ArrayList<Proceso> procesos;
+    private static Queue<Proceso> colaProcesos;
+    private static int marcosTotal;
+
+    public static void opcion1EscribirResultados(int TamsPaginas, int NumPROC, ArrayList<DimensionesMatriz> dimensiones) {
         for (int proceso = 0; proceso < NumPROC; proceso++) {
             DimensionesMatriz dim = dimensiones.get(proceso);
             int NumFilas = dim.filas; // Número de filas
@@ -78,6 +124,10 @@ public class SimulacionCaso2 {
         }
         System.out.println(); // Línea en blanco entre procesos
     }
+
+    public static void opcion2SimularEjecucio(){
+
+    }
     
 
     public static void main(String[] args) {
@@ -89,7 +139,7 @@ public class SimulacionCaso2 {
         dimensiones.add(new DimensionesMatriz(8, 8));
         dimensiones.add(new DimensionesMatriz(12, 12));
         // para cada caso NPROC
-        escribirResultados(TP, NPROC, dimensiones);
+        opcion1EscribirResultados(TP, NPROC, dimensiones);
     }
 
 }
