@@ -5,6 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,8 +73,9 @@ public class SimulacionCaso2 {
         boolean termino(){ return indiceReferencia >= referencias.size(); }
     }
 
-    /* ================== Lectura de configuración por STDIN ================== */
+    /* ================== Lectura de configuración por STDIN o archivo ================== */
 
+    // Mantiene la implementación original (lee TODO stdin y falla si está vacío)
     static Configuracion leerConfigDesdeStdin() throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         List<String> lineas = new ArrayList<>();
@@ -80,6 +84,26 @@ public class SimulacionCaso2 {
         if (lineas.isEmpty()) {
             throw new IllegalArgumentException(
                 "No se recibió entrada por STDIN. Ejemplo:  java SimulacionCaso2 < data/config.txt");
+        }
+        return parsearConfig(lineas);
+    }
+
+    // NUEVO: intenta leer de STDIN sólo si hay datos (no bloquea). Si no hay, retorna null.
+    static Configuracion intentarLeerConfigDesdeSTDIN() {
+        try {
+            InputStream in = System.in;
+            if (in.available() > 0) {
+                return leerConfigDesdeStdin();
+            }
+        } catch (IOException ignored) {}
+        return null;
+    }
+
+    // NUEVO: leer configuración desde una ruta de archivo (para modo menú)
+    static Configuracion leerConfigDesdeArchivo(String ruta) throws IOException {
+        List<String> lineas = Files.readAllLines(Paths.get(ruta));
+        if (lineas.isEmpty()) {
+            throw new IllegalArgumentException("El archivo de configuración está vacío: " + ruta);
         }
         return parsearConfig(lineas);
     }
@@ -355,17 +379,65 @@ public class SimulacionCaso2 {
         }
     }
 
+    /* ================== Menú interactivo (NUEVO) ================== */
+
+    static void mostrarMenu() {
+        System.out.println("===== Simulador de Memoria Virtual =====");
+        System.out.println("1) Opción 1: Generar referencias (lee TP, NPROC, TAMS)");
+        System.out.println("2) Opción 2: Simular ejecución (ingresa MARCOS_TOTALES y NPROC)");
+        System.out.print("Seleccione una opción (1/2): ");
+    }
+
+    static void flujoOpcion1Interactivo(BufferedReader br) throws Exception {
+        System.out.print("Ruta del archivo de configuración (por ejemplo, config.txt): ");
+        String ruta = br.readLine();
+        if (ruta == null || ruta.trim().isEmpty()) {
+            throw new IllegalArgumentException("No se proporcionó ruta de configuración.");
+        }
+        Configuracion cfg = leerConfigDesdeArchivo(ruta.trim());
+        generarArchivosProc(cfg);
+        System.out.println("Archivos proc<i>.txt generados correctamente.");
+    }
+
+    static void flujoOpcion2Interactivo(BufferedReader br) throws Exception {
+        System.out.print("Ingresa 'MARCOS_TOTALES,NPROC' (ej: 8,2): ");
+        String linea = br.readLine();
+        if (linea == null) throw new IllegalArgumentException("Entrada vacía.");
+        String[] partes = linea.trim().replace(" ", "").split(",");
+        if (partes.length != 2) throw new IllegalArgumentException("Formato inválido. Usa: 8,2");
+        int marcosTotales = Integer.parseInt(partes[0]);
+        int nproc = Integer.parseInt(partes[1]);
+        simularEjecucion(marcosTotales, nproc);
+    }
+
     /* ================== main ================== */
 
     public static void main(String[] args) throws Exception {
-        // Lee config de STDIN
-        Configuracion cfg = leerConfigDesdeStdin();
+        // 1) Si hay archivo por STDIN (java SimulacionCaso2 < config.txt) => comportamiento original
+        Configuracion cfgDesdeStdin = intentarLeerConfigDesdeSTDIN();
+        if (cfgDesdeStdin != null) {
+            // Flujo ORIGINAL: generar y luego simular con 4 marcos/proceso por defecto
+            generarArchivosProc(cfgDesdeStdin);
+            int marcosTotales = Math.max(cfgDesdeStdin.numeroProcesos * 4, cfgDesdeStdin.numeroProcesos);
+            simularEjecucion(marcosTotales, cfgDesdeStdin.numeroProcesos);
+            return;
+        }
 
-        // Opcion 1
-        generarArchivosProc(cfg);
+        // 2) Si NO hay STDIN, mostrar menú y pedir entradas según opción seleccionada
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        mostrarMenu();
+        String opcion = br.readLine();
+        if (opcion == null) throw new IllegalArgumentException("No se seleccionó opción.");
 
-        // Opcion 2 (por defecto: 4 marcos por proceso)
-        int marcosTotales = Math.max(cfg.numeroProcesos * 4, cfg.numeroProcesos);
-        simularEjecucion(marcosTotales, cfg.numeroProcesos);
+        switch (opcion.trim()) {
+            case "1":
+                flujoOpcion1Interactivo(br);
+                break;
+            case "2":
+                flujoOpcion2Interactivo(br);
+                break;
+            default:
+                throw new IllegalArgumentException("Opción inválida. Use 1 o 2.");
+        }
     }
 }
